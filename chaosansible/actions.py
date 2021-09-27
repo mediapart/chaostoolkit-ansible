@@ -17,6 +17,7 @@ from ansible.plugins.callback import CallbackBase
 from ansible.vars.manager import VariableManager
 from chaoslib.exceptions import FailedActivity, InvalidActivity
 from chaoslib.types import Configuration, Secrets
+from logzero import logger
 
 __all__ = ["chaosansible_run"]
 
@@ -203,17 +204,24 @@ def chaosansible_run(
     shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
     if len(results_callback.host_failed) > 0:
-        print("Ansible error(s): ")
-        for error in results_callback.host_failed:
-            print(results_callback.host_failed[error].__dict__)
+
+        logger.error(
+            "Ansible error(s): {}".format(
+                [
+                    results_callback.host_failed.get(error).__dict__
+                    for error in results_callback.host_failed
+                ]
+            )
+        )
 
         raise FailedActivity("Failed to run ansible task")
 
     elif len(results_callback.host_unreachable) > 0:
-        print("Unreachable host(s): ")
-        for error in results_callback.host_unreachable:
-            print(error)
-
+        logger.warning(
+            "Unreachable host(s): {}".format(
+                [error for error in results_callback.host_unreachable]
+            )
+        )
         raise FailedActivity("At least one target is down")
 
     else:
