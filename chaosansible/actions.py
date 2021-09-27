@@ -84,12 +84,12 @@ def random_host(host_list: list, num_target: int):
 
 def chaosansible_run(
     host_list: list = ("localhost"),
-    configuration: Configuration = None,
     facts: bool = False,
     become: bool = False,
     run_once: bool = False,
     ansible: dict = {},
     num_target: str = "all",
+    configuration: Configuration = None,
     secrets: Secrets = None,
 ):
 
@@ -112,8 +112,8 @@ def chaosansible_run(
     become_user = configuration.get("ansible_become_user")
     ssh_key_path = configuration.get("ansible_ssh_private_key")
     ansible_user = configuration.get("ansible_user")
-    become_ask_pass = configuration.get("become_ask_pass")
     ssh_extra_args = configuration.get("ansible_ssh_extra_args")
+    become_pass = secrets.get("ansible_become_pass")
 
     context.CLIARGS = ImmutableDict(
         connection="smart",
@@ -150,10 +150,7 @@ def chaosansible_run(
     results_callback = ResultsCollectorJSONCallback()
 
     variable_manager = VariableManager(loader=loader, inventory=inventory)
-    if become_ask_pass:
-        passwords = dict(become_pass=become_ask_pass)
-    else:
-        passwords = None
+    passwords = dict(become_pass=become_pass)
 
     # Ansible taskmanager
     tqm = TaskQueueManager(
